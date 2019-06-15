@@ -1,6 +1,5 @@
 const db = require('./dbConfig.js');
 const jwt = require('jsonwebtoken');
-const secrets = require('../config/secrets.js')
 
 module.exports = {
   add,
@@ -41,5 +40,5 @@ function generateToken(user) {
       expiresIn: '1h',
     };
   
-    return jwt.sign(payload, secrets.jwtSecret, options);
+    return jwt.sign(payload, process.env.JWT_SECRET, options);
   }
