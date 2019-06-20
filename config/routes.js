@@ -1,5 +1,7 @@
 const axios = require('axios');
+const bcrypt = require('bcryptjs')
 
+const Helper = require('../database/helperFunctions.js')
 const { authenticate } = require('../auth/authenticate');
 
 module.exports = server => {
@@ -8,12 +10,36 @@ module.exports = server => {
   server.get('/api/jokes', authenticate, getJokes);
 };
 
-function register(req, res) {
-  // implement user registration
+async function register (req, res) {
+  let user = req.body
+  try{
+    const hash = bcrypt.hashSync(user.password, 10);
+    user.password = hash;
+    const saved = await Helper.add(user)
+    const token = Helper.generateToken(saved)
+      res.status(201).json({ token }) ;
+  } catch(error) {
+      res.status(500).json(error);
+    };
 }
 
-function login(req, res) {
-  // implement user login
+async function login(req, res) {
+  let { username, password } = req.body
+  try{
+    const userAuthorized = await Helper.findBy ({ username })
+    .first()
+    if( username && bcrypt.compareSync(password, userAuthorized.password)) {
+      const token = Helper.generateToken(userAuthorized)
+      res.status(200).json({
+        message: `Welcome ${userAuthorized.username}!`,
+        authToken : token
+      })
+    } else {
+      res.status(401).json({ message: 'Invalid Credentials' });
+    }
+  } catch(error) {
+      res.status(500).json(error);
+    };
 }
 
 function getJokes(req, res) {
